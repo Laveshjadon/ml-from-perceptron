@@ -1,32 +1,59 @@
-# 🧠 ML Models From Scratch: The Perceptron
+# Linear Binary Classifier: Perceptron Implementation
 
-Hi there! 👋 Welcome to my repository.
+This repository contains a manual implementation of the Rosenblatt Perceptron algorithm (1957). The goal of this project was to move away from "black box" libraries like Scikit-Learn and understand the mathematical mechanics of convergence in linear classifiers.
 
-This project is my journey into understanding the **mathematics behind Machine Learning**. Instead of just importing `LinearRegression` from libraries and calling `.fit()`, I wanted to build the foundational algorithms from scratch to see what's actually happening "under the hood."
+## 🧠 The Mathematical Concept
 
-## 🚀 What is this project?
-This is a raw, manual implementation of the **Rosenblatt Perceptron Algorithm** in Python.
+The Perceptron is designed to find a separating hyperplane defined by $w \cdot x + b = 0$.
 
-The goal was simple:
-1.  Generate synthetic data (two distinct groups of points).
-2.  Write a linear classifier **without** using `sklearn`'s built-in models.
-3.  Visually prove that my math works by drawing the Decision Boundary (the separating line).
+It models a single neuron:
+1.  **Input:** Vector $x$
+2.  **Weights:** Vector $w$ (initially random or zero)
+3.  **Activation:** Step function (returns 1 if $w \cdot x + b > 0$, else -1)
 
-## 🛠️ How I built it
-I used **Python** with `numpy` for the math and `matplotlib` for the visuals.
+### The Learning Rule (Stochastic Gradient Descent)
+Unlike the analytical solution used in Linear Regression (Normal Equation), the Perceptron learns iteratively. I implemented the standard update rule:
 
-### 1. The Data
-I used `make_classification` to generate a dataset with 2 features.
-* **Challenge:** The data originally came with `0` and `1` labels.
-* **The Fix:** Since the Perceptron math requires `1` and `-1` to calculate updates correctly, I wrote a small preprocessing step to convert the labels.
+$$w_{new} = w_{old} + \eta \cdot (y_{true} - y_{pred}) \cdot x_i$$
 
-### 2. The Algorithm (The "Perceptron Trick")
-I implemented the classic update rule using **Stochastic Gradient Descent (SGD)**.
-* The model looks at one point at a time.
-* If it classifies the point correctly? Do nothing.
-* If it makes a mistake? Shift the line slightly towards the point.
+Where:
+* $\eta$ (eta) is the learning rate.
+* The term $(y_{true} - y_{pred})$ acts as the error signal.
+
+## 🛠️ Implementation Details & Challenges
+
+### 1. Label Encoding (The "Zero" Trap)
+One specific technical challenge I encountered was data compatibility. The `make_classification` function from Scikit-Learn generates labels as `{0, 1}`.
+
+However, the Perceptron update rule relies on the sign of the product $y \cdot f(x)$.
+* If $y=0$, the term $y \cdot x$ vanishes, and weights do not update.
+* **Solution:** I implemented a preprocessing step to map $0 \to -1$, ensuring that the geometry of the update vector always points in the correct direction (away from error).
+
+### 2. Vectorized vs. Loop Implementation
+For clarity, this implementation iterates through samples one by one (Stochastic approach) rather than using full batch matrix multiplication. This highlights how individual outliers affect the decision boundary during training.
+
+## 💻 Core Algorithm Snippet
+
+The logic resides in the custom `perceptron` function. It does not use any auto-differentiation libraries.
 
 ```python
-# The core logic I implemented
-if prediction * actual < 0:
-    weights = weights + learning_rate * actual * input_features
+def perceptron(X, y):
+    # Weights initialization
+    w1 = w2 = b = 1
+    lr = 0.1
+    
+    # Training Loop
+    for epoch in range(1000):
+        for i in range(len(X)):
+            
+            # Linear combination
+            z = w1*X[i][0] + w2*X[i][1] + b
+
+            # Check for misclassification
+            if z * y[i] < 0:
+                # Update weights towards the correct vector
+                w1 = w1 + lr * y[i] * X[i][0]
+                w2 = w2 + lr * y[i] * X[i][1]
+                b  = b  + lr * y[i]
+            
+    return w1, w2, b
